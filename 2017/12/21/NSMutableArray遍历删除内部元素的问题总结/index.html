@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>NSMutableArray遍历删除内部元素的问题总结 | Samuel的博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="&amp;emsp;&amp;emsp;NSMutableArray在项目中很多时候都能用到,一般用作有序的数据容器,因此一些增删数据&#x2F;对象的操作也会经常用到。方法很多也很简单易用，就不一一列举。 - (void)addObject:(ObjectType)anObject; - (void)removeAllObjects; - (void)removeObjectAtIndex:(NSUInteger)ind">
+<meta property="og:type" content="article">
+<meta property="og:title" content="NSMutableArray遍历删除内部元素的问题总结">
+<meta property="og:url" content="http://yoursite.com/2017/12/21/NSMutableArray%E9%81%8D%E5%8E%86%E5%88%A0%E9%99%A4%E5%86%85%E9%83%A8%E5%85%83%E7%B4%A0%E7%9A%84%E9%97%AE%E9%A2%98%E6%80%BB%E7%BB%93/index.html">
+<meta property="og:site_name" content="Samuel的博客">
+<meta property="og:description" content="&amp;emsp;&amp;emsp;NSMutableArray在项目中很多时候都能用到,一般用作有序的数据容器,因此一些增删数据&#x2F;对象的操作也会经常用到。方法很多也很简单易用，就不一一列举。 - (void)addObject:(ObjectType)anObject; - (void)removeAllObjects; - (void)removeObjectAtIndex:(NSUInteger)ind">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://ws2.sinaimg.cn/large/006tNbRwgy1fmqr708ilfj303i02iwer.jpg">
+<meta property="og:image" content="https://ws4.sinaimg.cn/large/006tNbRwgy1fmqr84ptd6j309m063q6x.jpg">
+<meta property="og:image" content="https://ws1.sinaimg.cn/large/006tNbRwgy1fmqrce3m6gj30a206jq7q.jpg">
+<meta property="og:image" content="https://ws2.sinaimg.cn/large/006tNbRwgy1fmqrcdv2mhj30a706l789.jpg">
+<meta property="og:image" content="https://ws4.sinaimg.cn/large/006tNbRwgy1fmqrcdshszj304o06m0u6.jpg">
+<meta property="article:published_time" content="2017-12-21T08:48:12.000Z">
+<meta property="article:modified_time" content="2017-12-23T08:09:18.062Z">
+<meta property="article:author" content="Samuelliang">
+<meta property="article:tag" content="iOS 技术 数组">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://ws2.sinaimg.cn/large/006tNbRwgy1fmqr708ilfj303i02iwer.jpg">
+  
+    <link rel="alternative" href="/atom.xml" title="Samuel的博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <div class="outer">
+        <section id="main"><article id="post-NSMutableArray遍历删除内部元素的问题总结" class="article article-type-post" itemscope itemprop="blogPost">
+  
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      NSMutableArray遍历删除内部元素的问题总结
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      <a href="/2017/12/21/NSMutableArray%E9%81%8D%E5%8E%86%E5%88%A0%E9%99%A4%E5%86%85%E9%83%A8%E5%85%83%E7%B4%A0%E7%9A%84%E9%97%AE%E9%A2%98%E6%80%BB%E7%BB%93/" class="article-date">
+  <time datetime="2017-12-21T08:48:12.000Z" itemprop="datePublished">2017-12-21</time>
+</a>
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>&emsp;&emsp;NSMutableArray在项目中很多时候都能用到,一般用作有序的数据容器,因此一些增删数据/对象的操作也会经常用到。<br>方法很多也很简单易用，就不一一列举。</p>
+<pre><code>- (void)addObject:(ObjectType)anObject;
+- (void)removeAllObjects;
+- (void)removeObjectAtIndex:(NSUInteger)index;
+- (void)insertObject:(ObjectType)anObject atIndex:(NSUInteger)index;
+    .
+    .
+    .</code></pre><p>&emsp;&emsp;但我们经常遇到的一个情况是，在NSMutableArray(数据源)中去遍历，将其中的不符合/符合某些规则的元素一一删除。那么问题就来了，NSMutableArray是有序的，那么如果在自己内部遍历并删除自己的内部元素，是属于自己删除自己，自身的索引可能会发生误差，一不小心就会数组越界，NSRangeException crash。</p>
+<p>&emsp;&emsp;比如有一个数组里面有10个元素，integerValue分别是0-9，我们遍历的过程中，integerValue = 2 的时候不符合，我们删掉了该元素，然后继续遍历，此时会报 <code>NSGenericException</code>错误，这是因为数组在遍历的时候动态改变了其中元素，导致数据集发生了变化。代码如下:</p>
+<p>NSMutableArray *arr = [NSMutableArray array];<br>    for (NSInteger i = 0; i&lt;10; i++) {<br>        [arr addObject:[NSNumber numberWithInteger:i]];<br>    }<br>    for (NSNumber *item in arr) {<br>        NSLog(@”item:%ld”,item.integerValue);<br>        if (item.integerValue == 2) {<br>            [arr removeObject:item];<br>            NSLog(@”arrCount:%ld”,arr.count);<br>        }<br>    }<br>结果如下:<br><img src="https://ws2.sinaimg.cn/large/006tNbRwgy1fmqr708ilfj303i02iwer.jpg" alt=""></p>
+<p>而另一种遍历方法<code>enumerateObjectsUsingBlock</code> 则不会出现索引跳位的现象而引起crash，代码如下:</p>
+<pre><code>[arr enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+    NSLog(@&quot;idx:%ld obj:%@ %p&quot;,idx,obj,obj);
+    if (idx == 2) {
+        NSLog(@&quot;deletObj:%@&quot;,obj);
+        [arr removeObject:obj];
+    }
+}];</code></pre><p>结果如下:<br><img src="https://ws4.sinaimg.cn/large/006tNbRwgy1fmqr84ptd6j309m063q6x.jpg" alt=""></p>
+<p>具体原因涉及到底层代码了，猜测是该方法是苹果封装该方法的时候动态地获取索引，因此不会出现索引跳位的现象而引起crash。<br>可是，细心观察，还是会发现问题：<br>索引对上了，可<br><code>obj:3</code>呢？<br>这是因为idx = 2 时删除了该索引的对应元素<code>obj:2</code>，数组发生变化后，索引值还是会 idx ++， 可是此时的数组元素顺序已经发生改变。<br>所以，当idx = 3的时候,<code>obj:3</code>已经是arr[1] _(原本是arr[2])。<br>因此此方法也是不妥的。</p>
+<hr>
+<p>那么，怎么做比较好呢？</p>
+<pre><code>NSMutableArray *tempArr = [NSMutableArray array];
+for (NSNumber *item in arr) {
+    if (item.integerValue == 2)//条件判断
+        [tempArr addObject:item];
+}
+[arr removeObjectsInArray:tempArr];</code></pre><p>上述方法是推荐的。</p>
+<p>那增加元素呢？数组是有序的数据容器，使用快速枚举的话，是无法获取到索引，进而无法将元素insert 到正确的位置的。而且快速枚举中是不允许对自身进行操作的。</p>
+<p>那么用<code>enumerateObjectsUsingBlock</code>方法？试试看</p>
+<pre><code>[arr enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+    NSLog(@&quot;idx:%ld obj:%@ %p&quot;,idx,obj,obj);
+    if (idx == 2) {
+        NSNumber *item = [NSNumber numberWithInteger:99];
+        [arr addObject:item];
+        //            [arr insertObject:item atIndex:idx];
+    }
+}];
+NSLog(@&quot;%@&quot;,arr);</code></pre><p>运行结果如下:</p>
+<p>  <img src="https://ws1.sinaimg.cn/large/006tNbRwgy1fmqrce3m6gj30a206jq7q.jpg" alt=""></p>
+<p>可以看出 <code>idx:10</code>的时候 对应的元素是 <code>obj:0</code> 这很明显是错误的</p>
+<p>再来看看<code>[arr insertObject:item atIndex:idx];</code> 插入元素</p>
+<p><img src="https://ws2.sinaimg.cn/large/006tNbRwgy1fmqrcdv2mhj30a706l789.jpg" alt=""></p>
+<p>这个就更离谱了，元素对不上，有部分元素直接就是空元素了。<br>至于导致这样的原因估计是枚举器的问题。</p>
+<p>但实际上，数组已经成功地插入/增加元素了。只是后续遍历的时候，会出现错误。因此在判断条件是唯一的时候，是暂时没问题的。(但还是不建议用这个方法,无论是从代码可读性，还是方法本身的问题…)</p>
+<p>这个时候C语言经典的for循环出场了:</p>
+<pre><code>for (NSInteger i = 0; i &lt; arr.count; i++) {
+    id item = arr[i];
+    NSLog(@&quot;item_%ld :%@&quot;,i,item);
+    if (i == 2) {
+        NSNumber *item = [NSNumber numberWithInteger:99];
+        [arr insertObject:item atIndex:i];
+    }
+}</code></pre><p>运行结果如下:<br> <img src="https://ws4.sinaimg.cn/large/006tNbRwgy1fmqrcdshszj304o06m0u6.jpg" alt=""></p>
+<p>红色框部分是没问题的哦。<code>obj:2</code>已经被插入的<code>obj:99</code>挤到下一个去了。</p>
+<hr>
+<p>小白一枚,如有不对的地方，欢迎斧正 QQ:3265096020</p>
+<p>关于数组遍历方法性能方面的讨论，可以参考<br>孙同学的blog: <a href="http://blog.sunnyxx.com/2014/04/30/ios_iterator/" target="_blank" rel="noopener">iOS 中集合遍历方法的比较和技巧</a></p>
+
+      
+
+      
+        
+    </div>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/12/26/UITextView%20runtime%E8%AE%BE%E7%BD%AEplaceHolder/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          UITextView 通过runtime 设置placeHolder
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/12/04/%E5%B2%81%E6%9C%88%E9%9D%99%E5%A5%BD/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">岁月静好 现世安稳</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        <aside id="sidebar">
+  <nav class="menus">
+  	<ul>
+  		<li><a href="/"><i class="icon icon-home"></i></a></li>
+  		
+			<li><a href="/archives"><i class="icon icon-fenlei"></i></a></li>
+  		
+  		
+			<li><a href="/tags"><i class="icon icon-tag"></i></a></li>
+  		
+  		
+  	</ul>
+  </nav>
+  <a id="go-top" href="#"><i class="icon icon-up"></i></a>
+</aside>
+
+      </div>
+      <footer id="footer">
+  
+	<div id="footer-info" class="inner">
+	  &copy; 2020 Samuelliang 
+	  - Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+	  - Theme <a href="https://github.com/hejianxian/hexo-theme-jane/" target="_blank">Jane</a>
+	</div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tag</a>
+  
+</nav>
+    
+
+<script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+  </div>
+</body>
+</html>
