@@ -1,351 +1,209 @@
 <!DOCTYPE html>
-<html>
-<head>
+<html lang="zh-CN">
+
+  <head>
   <meta charset="utf-8">
+  <meta name="author" content="oranges, 1451426471@qq.com" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
   
   <title>Samuel的博客</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="Samuel的博客">
-<meta property="og:url" content="http://yoursite.com/index.html">
-<meta property="og:site_name" content="Samuel的博客">
-<meta property="og:locale" content="en_US">
-<meta property="article:author" content="Samuelliang">
-<meta name="twitter:card" content="summary">
+
   
-    <link rel="alternative" href="/atom.xml" title="Samuel的博客" type="application/atom+xml">
+    <link rel="apple-touch-icon" href="/images/blog.ico">
+    <link rel="icon" href="/images/blog.ico">
   
-  
-    <link rel="icon" href="/favicon.png">
-  
-  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
-  
-<link rel="stylesheet" href="/css/style.css">
 
   
 
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- css -->
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/iconfont/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+
+  <!-- script -->
+  <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js"></script>
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  
 <meta name="generator" content="Hexo 4.2.0"></head>
-<body>
-  <div id="container">
-    <div id="wrap">
-      <div class="outer">
-        <section id="main">
-  
-    <article id="post-iOS NSNotification 里是怎么一回事" class="article article-type-post" itemscope itemprop="blogPost">
-  
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2019/01/21/iOS%20NSNotification%20%E9%87%8C%E6%98%AF%E6%80%8E%E4%B9%88%E4%B8%80%E5%9B%9E%E4%BA%8B/">iOS NSNotification 里是怎么一回事</a>
-    </h1>
-  
 
-      </header>
-    
-    <div class="article-meta">
-      <a href="/2019/01/21/iOS%20NSNotification%20%E9%87%8C%E6%98%AF%E6%80%8E%E4%B9%88%E4%B8%80%E5%9B%9E%E4%BA%8B/" class="article-date">
-  <time datetime="2019-01-21T08:48:12.000Z" itemprop="datePublished">2019-01-21</time>
-</a>
-      
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="iOS-NSNotification-里是怎么一回事"><a href="#iOS-NSNotification-里是怎么一回事" class="headerlink" title="iOS NSNotification 里是怎么一回事"></a>iOS NSNotification 里是怎么一回事</h1><blockquote>
-<p>NSNotification在平时开发中使用非常频繁，此处不再赘述NSNotification 如何使用，本篇章主要探究下NSNotification的原理</p>
-</blockquote>
-<p>###1. 什么是NSNotification?<br>苹果官方文档有一段对通知的介绍:</p>
-<blockquote>
-<p>A notification is a message sent to one or more observing objects to inform them of an event in a program. The notification mechanism of Cocoa follows a broadcast model.</p>
-</blockquote>
-<p>NSNotification（通知）是Cocoa 框架中基于观察者模式实现的用于一对多传播消息的一种机制。项目中的对象将他们自己或者其他对象添加到通知的观察者列表里，这个过程又叫做注册通知，其中项目中的所有通知都有一个唯一的字符串标识作为通知名唯一确定每个通知，通知源也就是被观察者可以创建通知对象，并发送到通知中心，通知中心找到所有注册该通知的对象（观察者），并将从被观察者那里收到通知，以消息的方式发送给所有的观察者们。<br>被观察者发送通知是一个同步的过程，即发送者在通知中心成功将该发送者之前的消息发送给所有观察者之前，不可以再次发送通知。另外，通知触发的代理方法都必须符合某一个单一参数签名约定，代理方法的参数是一个通知对象参数里包含着通知名，被观察者和一个包含其他额外信息的字典。</p>
-<p>###2.NSNotification 是同步还是异步？<br><code>NSNotification</code>​默认在主线程中通知是同步的。当通知产生时，通知中心会一直等待所有的观察者都收到并且处理通知结束，然后才会返回到发送通知的地方继续执行后面的代码，但可以将通知的发送或者将通知的处理方法放到子线程中，从而避免通知阻塞。其中，通知的发送可以添加到<code>NSNotificationQueue</code>异步通知缓冲队列中。也不会导致通知组塞，通知队列是一个通知缓冲队列，通常以FIFO(先进先出)的规则维护通知队列的发送，相通只队列添加通知的有3种枚举类型。<code>NSPostASAP</code>、<code>NSPostWhenIdle</code>、<code>NSPostNow</code>分别表示尽快发送，空闲时发送和现在立刻发送，可以根据通知的紧急程度进行选择。</p>
-<p>###3.使用总结<br>NSNotification 是iOS中一个调度消息通知的类,采用单例模式设计,在程序中实现传值、回调等地方应用很广。在iOS中，NSNotification是使用观察者模式来实现的用于跨层传递消息。往往也用NSNotification来实现解耦的目的。<br>通知这种传值方式一般用于一对多的情况，iOS中常见的还有代理传值、block传值等。代理实现和block一般用于一对一的情况。至于具体区别接不赘述了。</p>
-<ul>
-<li>通知的定义最好统一放在一个头文件中定义好，命名也尽量规范，比如用APP名模块名通知名这种方式，便于区分该通知具体实现什么目的。</li>
-<li>全局最好维护一个单例来进行通知的发送。并且建立一张通知发送对象的表及接收通知对象表。因为在比较大的项目中，通知使用很频繁的情况下，很难找到对应的位置。往往给开发埋下了严重的坑。</li>
-<li>接收通知的线程，和发送通知所处的线程是同一个线程。也就是说如果如果要在接收通知的时候更新UI，需要注意发送通知的线程是否为主线程。</li>
-</ul>
-<p>###4.通知中的结构</p>
-<h5 id="NSNotification"><a href="#NSNotification" class="headerlink" title="NSNotification"></a>NSNotification</h5><p>NSNotification包含了一些用于向其他对象发送通知的必要信息，发送通知通过NSNotificationCenter发送，其中NSNotification主要的字段有如下几个，也是发送通知必要的，注意NSNotification是一个不可变的对象。</p>
-<table>
-<thead>
-<tr>
-<th>字段名</th>
-<th>含义</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><code>name</code></td>
-<td>通知的名称，用于通知的唯一标识</td>
-</tr>
-<tr>
-<td><code>object</code></td>
-<td>保存发送通知的对象</td>
-</tr>
-<tr>
-<td><code>userinfo</code></td>
-<td>保存给通知接受者传递的额外信息</td>
-</tr>
-</tbody></table>
-<p>可以使用<code>notificationWithName:object:</code>或者<code>notificationWithName:object:userInfo:</code>创建通知对象，但是一般情况下不会这样直接创建。实际工作中更多是直接使用<code>NSNotificationCenter</code>调用<code>postNotificationName:object:</code>或者 <code>postNotificationName:object:userInfo:</code>方法发出通知，这两个方法会在内部直接创建这个对象。</p>
-<h5 id="NSNotificationCenter"><a href="#NSNotificationCenter" class="headerlink" title="NSNotificationCenter"></a>NSNotificationCenter</h5><p>NSNotificationCenter提供了一套机制来发送通知，本质上来讲NSNotificationCenter其实就是一个通知派发表。<br>NSNotificationCenter 对象方法及属性如下:</p>
-<!--![NSNotificationCenter方法列表-w346](blogImage/NSNotificationCenter_img.png)-->
-<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gdz7x69q1mj30j80mowxa.jpg" alt="NSNotificationCenter方法列表-w346"><br>可以使用的属性字段只有<code>defaultCenter</code>，方法不多，可以分成三类。</p>
-<table>
-<thead>
-<tr>
-<th>作用</th>
-<th>相关方法</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>添加通知观察者</td>
-<td>addObserverForName:object:queue:usingBlock:<br>addObserver:selector:name:object:</td>
-</tr>
-<tr>
-<td>移除通知观察者</td>
-<td>removeObserver:<br>removeObserver:name:object:</td>
-</tr>
-<tr>
-<td>发出通知</td>
-<td>postNotification:<br>postNotificationName:object:<br>postNotificationName:object:userInfo:</td>
-</tr>
-</tbody></table>
-<p>ps:参数<code>object</code>表示的是观察者只会接受来至<code>object</code>对象发出的所注册的通知。而不会接受其他对象发送的所注册的通知。</p>
-<h5 id="NSNotificationQueue"><a href="#NSNotificationQueue" class="headerlink" title="NSNotificationQueue"></a>NSNotificationQueue</h5><p>上文已经提到NSNotificationQueue在NSNotificationCenter起到了一个缓冲的作用。<br>具体分发策略由<code>NSPostingStyle</code>决定，放入NSNotificationQueue的通知可能会延迟，直到当前的runloop结束或runloop处于空闲状态才发送。值得注意的是，如果有多个相同的通知，可以在NSNotificationQueue进行合并，这样只会发送一个通知。<br>NSNotificationQueue 方法及属性如下，比较少。</p>
-<!--![NSNotificationQueue方法](blogImage/NSNotificationQueue_img.png)-->
-<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gdz7x141qij30me09c11x.jpg" alt=""><br>其中，NSPostingStyle 用于配置通知什么时候发送 如上文中有提到，</p>
-<ul>
-<li>NSPostASAP：在当前通知调用或者计时器结束发出通知</li>
-<li>NSPostWhenIdle：当runloop处于空闲时发出通知</li>
-<li>NSPostNow：在合并通知完成之后立即发出通知。</li>
-</ul>
-<p>NSNotificationCoalescing 则是用于配置如何合并通知。</p>
-<ul>
-<li>NSNotificationNoCoalescing：不合并通知</li>
-<li>NSNotificationNoCoalescing：按照通知名字合并通知</li>
-<li>NSNotificationCoalescingOnSender：按照传入的object合并通知</li>
-</ul>
-<hr>
-<h4 id="NSNotification通知机制的原理"><a href="#NSNotification通知机制的原理" class="headerlink" title="NSNotification通知机制的原理"></a>NSNotification通知机制的原理</h4><p>NSNotification 的基本流程是这样的：</p>
-<!--![QQ20200419-161201@2x](blogImage/QQ20200419-161201@2x.png)
--->
-<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gdz7x9cwqpj30va0m4afa.jpg" alt=""><br>1.NSNotification是一个类蔟不能够实例化，当我们调用initWithName:object:userInfo:方法的时候，系统内部会实例化NSNotification的子类<code>NSConcreteNotification</code>，在这个子类中重写了NSNofication定义的相关字段和方法。<br>NSNotification 一旦 通过init实例化,比如:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">NSNotification *notif &#x3D; [[NSNotification alloc]init];</span><br></pre></td></tr></table></figure>
-<p>则会引起错误。</p>
-<p>2.NSNotificationCenter是通知的管理类，实现较复杂。NSNotificationCenter中主要定义了两个table，同时也定义了Observation保存观察者信息。它们结构体可以简化如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">typedef struct NCTbl &#123;</span><br><span class="line">  Observation       *wildcard;  &#x2F;* Get ALL messages. *&#x2F;</span><br><span class="line">  GSIMapTable       nameless;   &#x2F;* Get messages for any name. *&#x2F;</span><br><span class="line">  GSIMapTable       named;      &#x2F;* Getting named messages only. *&#x2F;</span><br><span class="line">&#125; NCTable;</span><br></pre></td></tr></table></figure>
 
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">typedef struct  Obs &#123;</span><br><span class="line">  id        observer;   &#x2F;* Object to receive message.   *&#x2F;</span><br><span class="line">  SEL       selector;   &#x2F;* Method selector.     *&#x2F;</span><br><span class="line">  struct Obs    *next;      &#x2F;* Next item in linked list.    *&#x2F;</span><br><span class="line">  int       retained;   &#x2F;* Retain count for structure.  *&#x2F;</span><br><span class="line">  struct NCTbl  *link;      &#x2F;* Pointer back to chunk table  *&#x2F;</span><br><span class="line">&#125; Observation;</span><br></pre></td></tr></table></figure>
-
-<p>在NSNotificationCenter内部保存了两张表：一张用户保存添加观察者时传入了NotificationName的情况，一张用户保存添加观察者时没有传入NoficationName的情况。</p>
-<p><strong>Named Table</strong></p>
-<p>在Named Table中，NotifcationName作为表的key，因为我们在注册观察者的时候是可以传入一个参数object用于只监听指定该对象发出的通知，并且一个通知可以添加多个观察者，所以还需要一张表来保存object和Observer的对应关系。这张表的是key、Value分别是以object为Key，Observer为value。如何来实现保存多个观察者的情况呢？用链表这种数据结构最合适不过了。</p>
-<!--![nameTable](blogImage/nameTable.png)-->
-
-<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gdz7x7bbhkj310o0hw41p.jpg" alt=""></p>
-<p>首先外层有一个Table，以通知名称为Key。其Value同样是一个Table（简称内Table）。<br>为了实现可以传入一个参数object用于只监听指定该对象发出的通知，及一个通知可以添加多个观察者。则内Table的以传入的Object为Key，用链表来保存所有的观察者，并且以这个链表为Value。</p>
-<blockquote>
-<p><font size = 2 >在实际开发中我们经常传一个nil的object。这个时候系统会根据nil自动生产一个key（可以理解为一个nil_key）。相当于这个key对应的value(链表)保存的就是对于当前NotifcationName没有传入object的所有观察者。当NotifcationName被发送时，所以在链表中的观察者都会收到通知。</font></p>
-</blockquote>
-<p><strong>Nameless Table</strong><br>Nameless Table比Named Table要简单很多，因为没有NotificationName作为key，直接用object作为key。相较于Named Table要少一层table嵌套。</p>
-<!--![namelessTable](blogImage/namelessTable.png)-->
-<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gdz7x7tp2kj30mg0i6q4v.jpg" alt=""></p>
-<p><strong>wildcard</strong><br>wildcard是链表的数据结构，如果在注册观察者时既没有传入NotificationName，也没有传入object，就会添加到wildcard的链表中。注册到这里的观察者能接收到 所有的系统通知。</p>
-<hr>
-<p><strong>添加观察者</strong><br>添加观察者的过程就是按照上面的数据结构添加数据，中间会判断Table及Observation结点是否存在，不存在则创建新的，存在则直接使用。<br>首先在初始化NSNotificationCenter会创建一个对象，这个对象里面保存了NamedTable、UNnmedTable和一下其他信息。</p>
-<p>所有的添加通知操作最后都会调用到<code>addObserver: selector: name: object:</code>。</p>
-<ol>
-<li>首先会根据传入的参数，实例化一个Observation。这个Observation保存了观察者对象、接收到通知观察者对所执行的方法，由于Observation是一个链表，还保存了下一个Observation的地址。</li>
-<li>根据是否传入通知的Name选择在Named Table还是Nameless Table操作。</li>
-<li>如果传入通知的Name，则会先去用Name去查找是否已经有对应的Value(注意这个时候返回的Value是一个Table)</li>
-<li>如果没有对应的Value，则创建一个新的Table，然后将这个Table以Name为Key添加到Named Table。如果有Value，那么直接去取出这个Table。</li>
-<li>得到了保存Observation的Table之后，就通过传入的object去拿对应的链表。如果object为空，会默认有一个key表示传入object为空的情况，取的时候也会直接用这个key去取。表示所有任何地方发送通知都会监听。</li>
-<li>如果在保存Observation的Table中根据object作为key没有找到对应的链表，则会创建一个节点，作为头结点插入进去；如果找到了则直接在链表末尾插入之前实例化好的Observation。<br>在没有传入通知名字的情况和上面的过程类似，只不过是直接根据object去对应的链表而已。</li>
-</ol>
-<blockquote>
-<p><font size = 2 >如果既没有传入NotifcationName也没有传入Object。则这个观察者会添加到wildcard（在介绍Table数据结构中提到够）链表中。</font></p>
-</blockquote>
-<p><strong>发送通知的流程</strong><br>发送通知的一般是调用<code>postNotificationName:(NSNotificationName)aName object:(nullable id)anObject</code>来实现。</p>
-<p>postNotificationName内部会实例化一个NSNotification来保存传入的各种参数。根据之前介绍的数据结构，包含name、object和一个userinfo。</p>
-<p>发送通知的流程总体来讲就是根据NotifcationName查找到对应的Observer链表，然后遍历整个链表，给每个Observer结点中保持存的对象及SEL，来像对象发送信息（也即是调用对象的SEL方法）</p>
-<ol>
-<li>首先会定义一个数组ObserversArray来保存需要通知的Observer。之前在添加观察者的时候把既没有传入NotifcationName也没有传入object保存在了wildcard。因为这样的观察者会监听所有NotifcationName的通知，所以先把wildcard链表遍历一遍，将其中的Observer加到数组中ObserversArray</li>
-<li>找到以object为key的Observer链表。这个过程分为在Named Table中找，以及在UNamed Table中查找。然后将遍历找到的链表，同样加入到最开始创建的数组ObserversArray中。</li>
-<li>至此所有关于NotifcationName的Observer（wildcard+UNamed Table+Named Table）已经加入到了数组ObserversArray。接下来就是遍历这个ObserversArray数组，一次取出区中的Observer结点。因为这个几点保存了观察者对象以及selector。</li>
-</ol>
-<p><strong>移除通知的流程</strong><br>移除通知一般使用<code>removeObserver:(id)observer name:(nullable NSNotificationName)aName object:(nullable id)anObject;</code> 移除</p>
-<ol>
-<li>若NotificationName和object都为nil，则清空wildcard链表。</li>
-<li>若NotificationName为nil，遍历nameless table，若object为nil，则清空nameless table，若object不为nil，则在nameless table中以object为key找到对应的observer链表，然后清空。</li>
-<li>若NotificationName不为nil，在named table中以NotificationName为key找到对应的table，若object为nil，则清空找到的table，若object不为nil，则以object为key在找到的table中取出对应的链表，然后清空链表。</li>
-</ol>
-<blockquote>
-<p>​<font size = 2 >只要添加对象到NSNotificationCenter进行通知注册，之后就一定要对其remove进行通知注销，将对象添加到NSNotificationCenter后，通知NSNotificationCenter是保存该对象的地址，NSNotificationCenter到时候会根据地址发送通知给该对象，但并没有取得该对象的强引用，对象的引用计数不会加1，如果对象释放后，没有从NSNotificationCenter里remove，也就是通知中心还保存着那个指针，而那个指针指的对象可能已经被释放销毁了，那么那个字针就成为一个野指针，当通知发生时，会向这个野指针发送消息导致程序崩溃。</font></p>
-</blockquote>
-
-      
-
-      
-        
-    </div>
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/"><img src="/images/blog.png" alt=""></a>
+    <div class="nickname"><a href="/">Samuel</a></div>
   </div>
-  
-</article>
-
-
-
-  
-    <article id="post-NSMutableArray遍历删除内部元素的问题总结" class="article article-type-post" itemscope itemprop="blogPost">
-  
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2017/12/21/NSMutableArray%E9%81%8D%E5%8E%86%E5%88%A0%E9%99%A4%E5%86%85%E9%83%A8%E5%85%83%E7%B4%A0%E7%9A%84%E9%97%AE%E9%A2%98%E6%80%BB%E7%BB%93/">NSMutableArray遍历删除内部元素的问题总结</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      <a href="/2017/12/21/NSMutableArray%E9%81%8D%E5%8E%86%E5%88%A0%E9%99%A4%E5%86%85%E9%83%A8%E5%85%83%E7%B4%A0%E7%9A%84%E9%97%AE%E9%A2%98%E6%80%BB%E7%BB%93/" class="article-date">
-  <time datetime="2017-12-21T08:48:12.000Z" itemprop="datePublished">2017-12-21</time>
-</a>
+  <div class="navbar">
+    <ul>
       
-    </div>
-    <div class="article-entry" itemprop="articleBody">
+        <li class="nav-item" data-path="/">
+          <a href="/">主页</a>
+        </li>
       
-        <p>&emsp;&emsp;NSMutableArray在项目中很多时候都能用到,一般用作有序的数据容器,因此一些增删数据/对象的操作也会经常用到。<br>方法很多也很简单易用，就不一一列举。</p>
-<pre><code>- (void)addObject:(ObjectType)anObject;
-- (void)removeAllObjects;
-- (void)removeObjectAtIndex:(NSUInteger)index;
-- (void)insertObject:(ObjectType)anObject atIndex:(NSUInteger)index;
-    .
-    .
-    .</code></pre><p>&emsp;&emsp;但我们经常遇到的一个情况是，在NSMutableArray(数据源)中去遍历，将其中的不符合/符合某些规则的元素一一删除。那么问题就来了，NSMutableArray是有序的，那么如果在自己内部遍历并删除自己的内部元素，是属于自己删除自己，自身的索引可能会发生误差，一不小心就会数组越界，NSRangeException crash。</p>
-<p>&emsp;&emsp;比如有一个数组里面有10个元素，integerValue分别是0-9，我们遍历的过程中，integerValue = 2 的时候不符合，我们删掉了该元素，然后继续遍历，此时会报 <code>NSGenericException</code>错误，这是因为数组在遍历的时候动态改变了其中元素，导致数据集发生了变化。代码如下:</p>
-<p>NSMutableArray *arr = [NSMutableArray array];<br>    for (NSInteger i = 0; i&lt;10; i++) {<br>        [arr addObject:[NSNumber numberWithInteger:i]];<br>    }<br>    for (NSNumber *item in arr) {<br>        NSLog(@”item:%ld”,item.integerValue);<br>        if (item.integerValue == 2) {<br>            [arr removeObject:item];<br>            NSLog(@”arrCount:%ld”,arr.count);<br>        }<br>    }<br>结果如下:<br><img src="https://ws2.sinaimg.cn/large/006tNbRwgy1fmqr708ilfj303i02iwer.jpg" alt=""></p>
-<p>而另一种遍历方法<code>enumerateObjectsUsingBlock</code> 则不会出现索引跳位的现象而引起crash，代码如下:</p>
-<pre><code>[arr enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-    NSLog(@&quot;idx:%ld obj:%@ %p&quot;,idx,obj,obj);
-    if (idx == 2) {
-        NSLog(@&quot;deletObj:%@&quot;,obj);
-        [arr removeObject:obj];
-    }
-}];</code></pre><p>结果如下:<br><img src="https://ws4.sinaimg.cn/large/006tNbRwgy1fmqr84ptd6j309m063q6x.jpg" alt=""></p>
-<p>具体原因涉及到底层代码了，猜测是该方法是苹果封装该方法的时候动态地获取索引，因此不会出现索引跳位的现象而引起crash。<br>可是，细心观察，还是会发现问题：<br>索引对上了，可<br><code>obj:3</code>呢？<br>这是因为idx = 2 时删除了该索引的对应元素<code>obj:2</code>，数组发生变化后，索引值还是会 idx ++， 可是此时的数组元素顺序已经发生改变。<br>所以，当idx = 3的时候,<code>obj:3</code>已经是arr[1] _(原本是arr[2])。<br>因此此方法也是不妥的。</p>
-<hr>
-<p>那么，怎么做比较好呢？</p>
-<pre><code>NSMutableArray *tempArr = [NSMutableArray array];
-for (NSNumber *item in arr) {
-    if (item.integerValue == 2)//条件判断
-        [tempArr addObject:item];
-}
-[arr removeObjectsInArray:tempArr];</code></pre><p>上述方法是推荐的。</p>
-<p>那增加元素呢？数组是有序的数据容器，使用快速枚举的话，是无法获取到索引，进而无法将元素insert 到正确的位置的。而且快速枚举中是不允许对自身进行操作的。</p>
-<p>那么用<code>enumerateObjectsUsingBlock</code>方法？试试看</p>
-<pre><code>[arr enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-    NSLog(@&quot;idx:%ld obj:%@ %p&quot;,idx,obj,obj);
-    if (idx == 2) {
-        NSNumber *item = [NSNumber numberWithInteger:99];
-        [arr addObject:item];
-        //            [arr insertObject:item atIndex:idx];
-    }
-}];
-NSLog(@&quot;%@&quot;,arr);</code></pre><p>运行结果如下:</p>
-<p>  <img src="https://ws1.sinaimg.cn/large/006tNbRwgy1fmqrce3m6gj30a206jq7q.jpg" alt=""></p>
-<p>可以看出 <code>idx:10</code>的时候 对应的元素是 <code>obj:0</code> 这很明显是错误的</p>
-<p>再来看看<code>[arr insertObject:item atIndex:idx];</code> 插入元素</p>
-<p><img src="https://ws2.sinaimg.cn/large/006tNbRwgy1fmqrcdv2mhj30a706l789.jpg" alt=""></p>
-<p>这个就更离谱了，元素对不上，有部分元素直接就是空元素了。<br>至于导致这样的原因估计是枚举器的问题。</p>
-<p>但实际上，数组已经成功地插入/增加元素了。只是后续遍历的时候，会出现错误。因此在判断条件是唯一的时候，是暂时没问题的。(但还是不建议用这个方法,无论是从代码可读性，还是方法本身的问题…)</p>
-<p>这个时候C语言经典的for循环出场了:</p>
-<pre><code>for (NSInteger i = 0; i &lt; arr.count; i++) {
-    id item = arr[i];
-    NSLog(@&quot;item_%ld :%@&quot;,i,item);
-    if (i == 2) {
-        NSNumber *item = [NSNumber numberWithInteger:99];
-        [arr insertObject:item atIndex:i];
-    }
-}</code></pre><p>运行结果如下:<br> <img src="https://ws4.sinaimg.cn/large/006tNbRwgy1fmqrcdshszj304o06m0u6.jpg" alt=""></p>
-<p>红色框部分是没问题的哦。<code>obj:2</code>已经被插入的<code>obj:99</code>挤到下一个去了。</p>
-<hr>
-<p>小白一枚,如有不对的地方，欢迎斧正 QQ:3265096020</p>
-<p>关于数组遍历方法性能方面的讨论，可以参考<br>孙同学的blog: <a href="http://blog.sunnyxx.com/2014/04/30/ios_iterator/" target="_blank" rel="noopener">iOS 中集合遍历方法的比较和技巧</a></p>
-
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">归档</a>
+        </li>
       
-
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">标签</a>
+        </li>
       
-        
-    </div>
+    </ul>
   </div>
-  
-</article>
+</div>
+
+<script>
+  let navs = document.querySelectorAll('.nav-item');
+  let pagePath = window.location.pathname;
+  for(let nav of navs) {
+    let navPath = nav.getAttribute("data-path");
+    if(navPath && navPath === pagePath) {
+      nav.className = "nav-item active";
+    }
+  }
+</script>
 
 
-
-  
-  
-</section>
-        <aside id="sidebar">
-  <nav class="menus">
-  	<ul>
-  		<li><a href="/"><i class="icon icon-home"></i></a></li>
-  		
-			<li><a href="/archives"><i class="icon icon-fenlei"></i></a></li>
-  		
-  		
-			<li><a href="/tags"><i class="icon icon-tag"></i></a></li>
-  		
-  		
-  	</ul>
+      <div class="flex-container">
+        <div class="container index">
+  <div class="post-list">
+    
+      <div class="post-item" title="iOS NSNotification 里是怎么一回事">
+        <div class="time-m-d">2019-01-21</div>
+        <div class="title">
+          <a href="/2019/01/21/iOS%20NSNotification%20%E9%87%8C%E6%98%AF%E6%80%8E%E4%B9%88%E4%B8%80%E5%9B%9E%E4%BA%8B/">
+            
+            <span>iOS NSNotification 里是怎么一回事</span>
+            
+          </a>
+        </div>
+      </div>
+    
+      <div class="post-item" title="NSMutableArray遍历删除内部元素的问题总结">
+        <div class="time-m-d">2017-12-21</div>
+        <div class="title">
+          <a href="/2017/12/21/NSMutableArray%E9%81%8D%E5%8E%86%E5%88%A0%E9%99%A4%E5%86%85%E9%83%A8%E5%85%83%E7%B4%A0%E7%9A%84%E9%97%AE%E9%A2%98%E6%80%BB%E7%BB%93/">
+            
+            <span>NSMutableArray遍历删除内部元素的问题总结</span>
+            
+          </a>
+        </div>
+      </div>
+    
+  </div>
+  <nav class="post-navigation">
+    
+    <span class="page-num">1 / 1</span>
+    
   </nav>
-  <a id="go-top" href="#"><i class="icon icon-up"></i></a>
-</aside>
+</div>
+
+        <div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          <a title="微信" href="">
+            <i class="iconfont icon-wechat"></i>
+          </a>
+        </li>
+      
+        <li>
+          <a title="微博" href="">
+            <i class="iconfont icon-weibo"></i>
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+  
+    <div class="footer-more">
+      <a href="https://github.com/zchengsite/hexo-theme-oranges" target="_blank" rel="noopener">Copyright © Oranges 2020</a>
+    </div>
+  
+    <div class="footer-more">
+      <a href="https://github.com/zchengsite/hexo-theme-oranges" target="_blank" rel="noopener">Theme by Oranges | Powered by Hexo</a>
+    </div>
+  
+</div>
 
       </div>
-      <footer id="footer">
-  
-	<div id="footer-info" class="inner">
-	  &copy; 2020 Samuelliang 
-	  - Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
-	  - Theme <a href="https://github.com/hejianxian/hexo-theme-jane/" target="_blank">Jane</a>
-	</div>
-</footer>
+
+      <div class="back-to-top hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+<script>
+
+  function isHidden() {
+    let scrollTop = document.documentElement.scrollTop || document.body.scrollTop
+    if (scrollTop > 0) {
+       document.querySelector(".back-to-top").className = "back-to-top";
+    } else {
+      document.querySelector(".back-to-top").className = "back-to-top hidden";
+    }
+  }
+
+  const backToTop = () => {
+    let scrollTop =
+        document.documentElement.scrollTop || document.body.scrollTop,
+      delay = 10,
+      time = 200;
+    let step = Math.ceil(scrollTop * delay / time);
+    let timer = setInterval(() => {
+      scrollTop =
+        document.documentElement.scrollTop || document.body.scrollTop;
+      if (scrollTop - step <= 0) {
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        clearInterval(timer);
+      } else {
+        document.documentElement.scrollTop = scrollTop - step;
+        document.body.scrollTop = scrollTop - step;
+      }
+    }, delay);
+  }
+
+  document.addEventListener("scroll", isHidden, false);
+  document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+</script>
+
 
     </div>
-    <nav id="mobile-nav">
-  
-    <a href="/" class="mobile-nav-link">Home</a>
-  
-    <a href="/archives" class="mobile-nav-link">Archives</a>
-  
-    <a href="/tags" class="mobile-nav-link">Tag</a>
-  
-</nav>
-    
 
-<script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+    <script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".markdown-body img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
 
-
-  
-<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
-
-  
-<script src="/fancybox/jquery.fancybox.pack.js"></script>
-
-
-
-
-<script src="/js/script.js"></script>
-
-
-  </div>
-</body>
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+  </body>
 </html>

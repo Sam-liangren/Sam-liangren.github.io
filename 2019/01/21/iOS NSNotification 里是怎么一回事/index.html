@@ -1,84 +1,129 @@
 <!DOCTYPE html>
-<html>
-<head>
+<html lang="zh-CN">
+
+  <head>
   <meta charset="utf-8">
+  <meta name="author" content="oranges, 1451426471@qq.com" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
   
   <title>iOS NSNotification 里是怎么一回事 | Samuel的博客</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="iOS NSNotification 里是怎么一回事 NSNotification在平时开发中使用非常频繁，此处不再赘述NSNotification 如何使用，本篇章主要探究下NSNotification的原理  ###1. 什么是NSNotification?苹果官方文档有一段对通知的介绍:  A notification is a message sent to one or more obs">
-<meta property="og:type" content="article">
-<meta property="og:title" content="iOS NSNotification 里是怎么一回事">
-<meta property="og:url" content="http://yoursite.com/2019/01/21/iOS%20NSNotification%20%E9%87%8C%E6%98%AF%E6%80%8E%E4%B9%88%E4%B8%80%E5%9B%9E%E4%BA%8B/index.html">
-<meta property="og:site_name" content="Samuel的博客">
-<meta property="og:description" content="iOS NSNotification 里是怎么一回事 NSNotification在平时开发中使用非常频繁，此处不再赘述NSNotification 如何使用，本篇章主要探究下NSNotification的原理  ###1. 什么是NSNotification?苹果官方文档有一段对通知的介绍:  A notification is a message sent to one or more obs">
-<meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gdz7x69q1mj30j80mowxa.jpg">
-<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gdz7x141qij30me09c11x.jpg">
-<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gdz7x9cwqpj30va0m4afa.jpg">
-<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gdz7x7bbhkj310o0hw41p.jpg">
-<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gdz7x7tp2kj30mg0i6q4v.jpg">
-<meta property="article:published_time" content="2019-01-21T08:48:12.000Z">
-<meta property="article:modified_time" content="2020-04-19T09:48:44.526Z">
-<meta property="article:author" content="Samuelliang">
-<meta property="article:tag" content="iOS 技术">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gdz7x69q1mj30j80mowxa.jpg">
+
   
-    <link rel="alternative" href="/atom.xml" title="Samuel的博客" type="application/atom+xml">
+    <link rel="apple-touch-icon" href="/images/blog.ico">
+    <link rel="icon" href="/images/blog.ico">
   
-  
-    <link rel="icon" href="/favicon.png">
-  
-  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
-  
-<link rel="stylesheet" href="/css/style.css">
 
   
 
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- css -->
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/iconfont/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+
+  <!-- script -->
+  <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js"></script>
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  
 <meta name="generator" content="Hexo 4.2.0"></head>
-<body>
-  <div id="container">
-    <div id="wrap">
-      <div class="outer">
-        <section id="main"><article id="post-iOS NSNotification 里是怎么一回事" class="article article-type-post" itemscope itemprop="blogPost">
-  
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 class="article-title" itemprop="name">
-      iOS NSNotification 里是怎么一回事
-    </h1>
-  
 
-      </header>
-    
-    <div class="article-meta">
-      <a href="/2019/01/21/iOS%20NSNotification%20%E9%87%8C%E6%98%AF%E6%80%8E%E4%B9%88%E4%B8%80%E5%9B%9E%E4%BA%8B/" class="article-date">
-  <time datetime="2019-01-21T08:48:12.000Z" itemprop="datePublished">2019-01-21</time>
-</a>
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/"><img src="/images/blog.png" alt=""></a>
+    <div class="nickname"><a href="/">Samuel</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
       
+        <li class="nav-item" data-path="/">
+          <a href="/">主页</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">归档</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">标签</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+<script>
+  let navs = document.querySelectorAll('.nav-item');
+  let pagePath = window.location.pathname;
+  for(let nav of navs) {
+    let navPath = nav.getAttribute("data-path");
+    if(navPath && navPath === pagePath) {
+      nav.className = "nav-item active";
+    }
+  }
+</script>
+
+
+      <div class="flex-container">
+        <!-- ejs文件，建议切换编辑器plain text为html查看更佳 -->
+<!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+
+
+
+
+
+
+
+
+<!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+<div class="container post-details" id="post-details">
+  <div class="post-content">
+    <div class="post-title">iOS NSNotification 里是怎么一回事</div>
+    <div class="post-attach">
+      <span class="post-pubtime">2019-01-21</span>
+      <span class="post-tags">
+        
+          <i class="iconfont icon-tags"></i>
+          
+          <span class="span--tag">
+            <a href="/tags/iOS-%E6%8A%80%E6%9C%AF/">
+              #iOS 技术
+            </a>
+          </span>
+          
+        
+      </span>
     </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="iOS-NSNotification-里是怎么一回事"><a href="#iOS-NSNotification-里是怎么一回事" class="headerlink" title="iOS NSNotification 里是怎么一回事"></a>iOS NSNotification 里是怎么一回事</h1><blockquote>
+    <div class="markdown-body">
+      <h1 id="iOS-NSNotification-里是怎么一回事"><a href="#iOS-NSNotification-里是怎么一回事" class="headerlink" title="iOS NSNotification 里是怎么一回事?"></a>iOS NSNotification 里是怎么一回事?</h1><blockquote>
 <p>NSNotification在平时开发中使用非常频繁，此处不再赘述NSNotification 如何使用，本篇章主要探究下NSNotification的原理</p>
 </blockquote>
-<p>###1. 什么是NSNotification?<br>苹果官方文档有一段对通知的介绍:</p>
+<h2 id="1-什么是NSNotification"><a href="#1-什么是NSNotification" class="headerlink" title="1. 什么是NSNotification?"></a>1. 什么是NSNotification?</h2><p>苹果官方文档有一段对通知的介绍:</p>
 <blockquote>
 <p>A notification is a message sent to one or more observing objects to inform them of an event in a program. The notification mechanism of Cocoa follows a broadcast model.</p>
 </blockquote>
 <p>NSNotification（通知）是Cocoa 框架中基于观察者模式实现的用于一对多传播消息的一种机制。项目中的对象将他们自己或者其他对象添加到通知的观察者列表里，这个过程又叫做注册通知，其中项目中的所有通知都有一个唯一的字符串标识作为通知名唯一确定每个通知，通知源也就是被观察者可以创建通知对象，并发送到通知中心，通知中心找到所有注册该通知的对象（观察者），并将从被观察者那里收到通知，以消息的方式发送给所有的观察者们。<br>被观察者发送通知是一个同步的过程，即发送者在通知中心成功将该发送者之前的消息发送给所有观察者之前，不可以再次发送通知。另外，通知触发的代理方法都必须符合某一个单一参数签名约定，代理方法的参数是一个通知对象参数里包含着通知名，被观察者和一个包含其他额外信息的字典。</p>
-<p>###2.NSNotification 是同步还是异步？<br><code>NSNotification</code>​默认在主线程中通知是同步的。当通知产生时，通知中心会一直等待所有的观察者都收到并且处理通知结束，然后才会返回到发送通知的地方继续执行后面的代码，但可以将通知的发送或者将通知的处理方法放到子线程中，从而避免通知阻塞。其中，通知的发送可以添加到<code>NSNotificationQueue</code>异步通知缓冲队列中。也不会导致通知组塞，通知队列是一个通知缓冲队列，通常以FIFO(先进先出)的规则维护通知队列的发送，相通只队列添加通知的有3种枚举类型。<code>NSPostASAP</code>、<code>NSPostWhenIdle</code>、<code>NSPostNow</code>分别表示尽快发送，空闲时发送和现在立刻发送，可以根据通知的紧急程度进行选择。</p>
-<p>###3.使用总结<br>NSNotification 是iOS中一个调度消息通知的类,采用单例模式设计,在程序中实现传值、回调等地方应用很广。在iOS中，NSNotification是使用观察者模式来实现的用于跨层传递消息。往往也用NSNotification来实现解耦的目的。<br>通知这种传值方式一般用于一对多的情况，iOS中常见的还有代理传值、block传值等。代理实现和block一般用于一对一的情况。至于具体区别接不赘述了。</p>
+<h2 id="2-NSNotification-是同步还是异步？"><a href="#2-NSNotification-是同步还是异步？" class="headerlink" title="2.NSNotification 是同步还是异步？"></a>2.NSNotification 是同步还是异步？</h2><p><code>NSNotification</code>​默认在主线程中通知是同步的。当通知产生时，通知中心会一直等待所有的观察者都收到并且处理通知结束，然后才会返回到发送通知的地方继续执行后面的代码，但可以将通知的发送或者将通知的处理方法放到子线程中，从而避免通知阻塞。其中，通知的发送可以添加到<code>NSNotificationQueue</code>异步通知缓冲队列中。也不会导致通知组塞，通知队列是一个通知缓冲队列，通常以FIFO(先进先出)的规则维护通知队列的发送，相通只队列添加通知的有3种枚举类型。<code>NSPostASAP</code>、<code>NSPostWhenIdle</code>、<code>NSPostNow</code>分别表示尽快发送，空闲时发送和现在立刻发送，可以根据通知的紧急程度进行选择。</p>
+<h2 id="3-使用总结"><a href="#3-使用总结" class="headerlink" title="3.使用总结"></a>3.使用总结</h2><p>NSNotification 是iOS中一个调度消息通知的类,采用单例模式设计,在程序中实现传值、回调等地方应用很广。在iOS中，NSNotification是使用观察者模式来实现的用于跨层传递消息。往往也用NSNotification来实现解耦的目的。<br>通知这种传值方式一般用于一对多的情况，iOS中常见的还有代理传值、block传值等。代理实现和block一般用于一对一的情况。至于具体区别接不赘述了。</p>
 <ul>
 <li>通知的定义最好统一放在一个头文件中定义好，命名也尽量规范，比如用APP名模块名通知名这种方式，便于区分该通知具体实现什么目的。</li>
 <li>全局最好维护一个单例来进行通知的发送。并且建立一张通知发送对象的表及接收通知对象表。因为在比较大的项目中，通知使用很频繁的情况下，很难找到对应的位置。往往给开发埋下了严重的坑。</li>
-<li>接收通知的线程，和发送通知所处的线程是同一个线程。也就是说如果如果要在接收通知的时候更新UI，需要注意发送通知的线程是否为主线程。</li>
+<li>接收通知的线程，和发送通知所处的线程是同一个线程。也就是说如果如果要在接收通知的时候更新UI，需要注意发送通知的线程是否为主线程。<h2 id="4-通知中的结构"><a href="#4-通知中的结构" class="headerlink" title="4.通知中的结构"></a>4.通知中的结构</h2><h3 id="NSNotification"><a href="#NSNotification" class="headerlink" title="NSNotification"></a>NSNotification</h3>NSNotification包含了一些用于向其他对象发送通知的必要信息，发送通知通过NSNotificationCenter发送，其中NSNotification主要的字段有如下几个，也是发送通知必要的，注意NSNotification是一个不可变的对象。</li>
 </ul>
-<p>###4.通知中的结构</p>
-<h5 id="NSNotification"><a href="#NSNotification" class="headerlink" title="NSNotification"></a>NSNotification</h5><p>NSNotification包含了一些用于向其他对象发送通知的必要信息，发送通知通过NSNotificationCenter发送，其中NSNotification主要的字段有如下几个，也是发送通知必要的，注意NSNotification是一个不可变的对象。</p>
 <table>
 <thead>
 <tr>
@@ -100,7 +145,7 @@
 </tr>
 </tbody></table>
 <p>可以使用<code>notificationWithName:object:</code>或者<code>notificationWithName:object:userInfo:</code>创建通知对象，但是一般情况下不会这样直接创建。实际工作中更多是直接使用<code>NSNotificationCenter</code>调用<code>postNotificationName:object:</code>或者 <code>postNotificationName:object:userInfo:</code>方法发出通知，这两个方法会在内部直接创建这个对象。</p>
-<h5 id="NSNotificationCenter"><a href="#NSNotificationCenter" class="headerlink" title="NSNotificationCenter"></a>NSNotificationCenter</h5><p>NSNotificationCenter提供了一套机制来发送通知，本质上来讲NSNotificationCenter其实就是一个通知派发表。<br>NSNotificationCenter 对象方法及属性如下:</p>
+<h3 id="NSNotificationCenter"><a href="#NSNotificationCenter" class="headerlink" title="NSNotificationCenter"></a>NSNotificationCenter</h3><p>NSNotificationCenter提供了一套机制来发送通知，本质上来讲NSNotificationCenter其实就是一个通知派发表。<br>NSNotificationCenter 对象方法及属性如下:</p>
 <!--![NSNotificationCenter方法列表-w346](blogImage/NSNotificationCenter_img.png)-->
 <p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gdz7x69q1mj30j80mowxa.jpg" alt="NSNotificationCenter方法列表-w346"><br>可以使用的属性字段只有<code>defaultCenter</code>，方法不多，可以分成三类。</p>
 <table>
@@ -124,7 +169,7 @@
 </tr>
 </tbody></table>
 <p>ps:参数<code>object</code>表示的是观察者只会接受来至<code>object</code>对象发出的所注册的通知。而不会接受其他对象发送的所注册的通知。</p>
-<h5 id="NSNotificationQueue"><a href="#NSNotificationQueue" class="headerlink" title="NSNotificationQueue"></a>NSNotificationQueue</h5><p>上文已经提到NSNotificationQueue在NSNotificationCenter起到了一个缓冲的作用。<br>具体分发策略由<code>NSPostingStyle</code>决定，放入NSNotificationQueue的通知可能会延迟，直到当前的runloop结束或runloop处于空闲状态才发送。值得注意的是，如果有多个相同的通知，可以在NSNotificationQueue进行合并，这样只会发送一个通知。<br>NSNotificationQueue 方法及属性如下，比较少。</p>
+<h3 id="NSNotificationQueue"><a href="#NSNotificationQueue" class="headerlink" title="NSNotificationQueue"></a>NSNotificationQueue</h3><p>上文已经提到NSNotificationQueue在NSNotificationCenter起到了一个缓冲的作用。<br>具体分发策略由<code>NSPostingStyle</code>决定，放入NSNotificationQueue的通知可能会延迟，直到当前的runloop结束或runloop处于空闲状态才发送。值得注意的是，如果有多个相同的通知，可以在NSNotificationQueue进行合并，这样只会发送一个通知。<br>NSNotificationQueue 方法及属性如下，比较少。</p>
 <!--![NSNotificationQueue方法](blogImage/NSNotificationQueue_img.png)-->
 <p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gdz7x141qij30me09c11x.jpg" alt=""><br>其中，NSPostingStyle 用于配置通知什么时候发送 如上文中有提到，</p>
 <ul>
@@ -139,16 +184,16 @@
 <li>NSNotificationCoalescingOnSender：按照传入的object合并通知</li>
 </ul>
 <hr>
-<h4 id="NSNotification通知机制的原理"><a href="#NSNotification通知机制的原理" class="headerlink" title="NSNotification通知机制的原理"></a>NSNotification通知机制的原理</h4><p>NSNotification 的基本流程是这样的：</p>
+<h3 id="NSNotification通知机制的原理"><a href="#NSNotification通知机制的原理" class="headerlink" title="NSNotification通知机制的原理"></a>NSNotification通知机制的原理</h3><p>NSNotification 的基本流程是这样的：</p>
 <!--![QQ20200419-161201@2x](blogImage/QQ20200419-161201@2x.png)
 -->
 <p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gdz7x9cwqpj30va0m4afa.jpg" alt=""><br>1.NSNotification是一个类蔟不能够实例化，当我们调用initWithName:object:userInfo:方法的时候，系统内部会实例化NSNotification的子类<code>NSConcreteNotification</code>，在这个子类中重写了NSNofication定义的相关字段和方法。<br>NSNotification 一旦 通过init实例化,比如:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">NSNotification *notif &#x3D; [[NSNotification alloc]init];</span><br></pre></td></tr></table></figure>
 <p>则会引起错误。</p>
 <p>2.NSNotificationCenter是通知的管理类，实现较复杂。NSNotificationCenter中主要定义了两个table，同时也定义了Observation保存观察者信息。它们结构体可以简化如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">typedef struct NCTbl &#123;</span><br><span class="line">  Observation       *wildcard;  &#x2F;* Get ALL messages. *&#x2F;</span><br><span class="line">  GSIMapTable       nameless;   &#x2F;* Get messages for any name. *&#x2F;</span><br><span class="line">  GSIMapTable       named;      &#x2F;* Getting named messages only. *&#x2F;</span><br><span class="line">&#125; NCTable;</span><br></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">NCTbl</span> &#123;</span></span><br><span class="line">  Observation       *wildcard;  <span class="comment">/* Get ALL messages. */</span></span><br><span class="line">  GSIMapTable       nameless;   <span class="comment">/* Get messages for any name. */</span></span><br><span class="line">  GSIMapTable       named;      <span class="comment">/* Getting named messages only. */</span></span><br><span class="line">&#125; NCTable;</span><br></pre></td></tr></table></figure>
 
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">typedef struct  Obs &#123;</span><br><span class="line">  id        observer;   &#x2F;* Object to receive message.   *&#x2F;</span><br><span class="line">  SEL       selector;   &#x2F;* Method selector.     *&#x2F;</span><br><span class="line">  struct Obs    *next;      &#x2F;* Next item in linked list.    *&#x2F;</span><br><span class="line">  int       retained;   &#x2F;* Retain count for structure.  *&#x2F;</span><br><span class="line">  struct NCTbl  *link;      &#x2F;* Pointer back to chunk table  *&#x2F;</span><br><span class="line">&#125; Observation;</span><br></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span>  <span class="title">Obs</span> &#123;</span></span><br><span class="line">  id        observer;   <span class="comment">/* Object to receive message.   */</span></span><br><span class="line">  SEL       selector;   <span class="comment">/* Method selector.     */</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">Obs</span>    *<span class="title">next</span>;</span>      <span class="comment">/* Next item in linked list.    */</span></span><br><span class="line">  <span class="keyword">int</span>       retained;   <span class="comment">/* Retain count for structure.  */</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">NCTbl</span>  *<span class="title">link</span>;</span>      <span class="comment">/* Pointer back to chunk table  */</span></span><br><span class="line">&#125; Observation;</span><br></pre></td></tr></table></figure>
 
 <p>在NSNotificationCenter内部保存了两张表：一张用户保存添加观察者时传入了NotificationName的情况，一张用户保存添加观察者时没有传入NoficationName的情况。</p>
 <p><strong>Named Table</strong></p>
@@ -196,82 +241,165 @@
 <p>​<font size = 2 >只要添加对象到NSNotificationCenter进行通知注册，之后就一定要对其remove进行通知注销，将对象添加到NSNotificationCenter后，通知NSNotificationCenter是保存该对象的地址，NSNotificationCenter到时候会根据地址发送通知给该对象，但并没有取得该对象的强引用，对象的引用计数不会加1，如果对象释放后，没有从NSNotificationCenter里remove，也就是通知中心还保存着那个指针，而那个指针指的对象可能已经被释放销毁了，那么那个字针就成为一个野指针，当通知发生时，会向这个野指针发送消息导致程序崩溃。</font></p>
 </blockquote>
 
-      
-
-      
-        
     </div>
   </div>
   
-    
-<nav id="article-nav">
-  
-  
-    <a href="/2017/12/21/NSMutableArray%E9%81%8D%E5%8E%86%E5%88%A0%E9%99%A4%E5%86%85%E9%83%A8%E5%85%83%E7%B4%A0%E7%9A%84%E9%97%AE%E9%A2%98%E6%80%BB%E7%BB%93/" id="article-nav-older" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Older</strong>
-      <div class="article-nav-title">NSMutableArray遍历删除内部元素的问题总结</div>
-    </a>
-  
-</nav>
+<div class="post-catalog" id="catalog">
+  <div class="title">目录</div>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#iOS-NSNotification-里是怎么一回事"><span class="toc-text">iOS NSNotification 里是怎么一回事?</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-什么是NSNotification"><span class="toc-text">1. 什么是NSNotification?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-NSNotification-是同步还是异步？"><span class="toc-text">2.NSNotification 是同步还是异步？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-使用总结"><span class="toc-text">3.使用总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-通知中的结构"><span class="toc-text">4.通知中的结构</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#NSNotification"><span class="toc-text">NSNotification</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#NSNotificationCenter"><span class="toc-text">NSNotificationCenter</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#NSNotificationQueue"><span class="toc-text">NSNotificationQueue</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#NSNotification通知机制的原理"><span class="toc-text">NSNotification通知机制的原理</span></a></li></ol></li></ol></li></ol>
+</div>
+
+<script>
+  var catalog = null;
+  var catalogTopHeight = null;
+  function handleScoll() {
+    catalog = document.getElementById("catalog");
+    catalogTopHeight = catalog.offsetTop;
+  }
+
+  function changePos() {
+    let scrollTop = document.documentElement.scrollTop || document.body.scrollTop
+    if (scrollTop > catalogTopHeight - 20) {
+      catalog.style = "position: fixed; top: 20px;"
+    } else {
+      catalog.style = "position: absolute; top: calc(290px + 88px + 30px)"
+    }
+  }
+
+  function isActiveCat() {
+    // 可宽限高度值
+    let offsetHeight = 20
+
+    // 当前页面滚动位置距页面顶部的高度值
+    let scrollTop = document.documentElement.scrollTop || document.body.scrollTop
+
+    // 页面所有标题列表
+    let headerLinkList = document.getElementsByClassName("headerlink")
+
+    // 页面所有目录列表
+    let catLinkList = document.getElementsByClassName("toc-link")
+
+    for(let i = 0; i < catLinkList.length; i++) {
+      let currentTopCat = headerLinkList[i].offsetTop - offsetHeight
+      let nextTopCat = i + 1 === headerLinkList.length ?
+          Infinity : headerLinkList[i+1].offsetTop - offsetHeight
+
+      if (scrollTop >= currentTopCat && scrollTop < nextTopCat) {
+        catLinkList[i].className = "toc-link active"
+      } else {
+        catLinkList[i].className = "toc-link"
+      }
+    }
+  }
+
+  handleScoll();
+  isActiveCat();
+  document.addEventListener("scroll", changePos, false);
+  document.addEventListener("scroll", isActiveCat, false);
+
+</script>
+
+
 
   
-</article>
+</div>
 
 
-</section>
-        <aside id="sidebar">
-  <nav class="menus">
-  	<ul>
-  		<li><a href="/"><i class="icon icon-home"></i></a></li>
-  		
-			<li><a href="/archives"><i class="icon icon-fenlei"></i></a></li>
-  		
-  		
-			<li><a href="/tags"><i class="icon icon-tag"></i></a></li>
-  		
-  		
-  	</ul>
-  </nav>
-  <a id="go-top" href="#"><i class="icon icon-up"></i></a>
-</aside>
+        <div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          <a title="微信" href="">
+            <i class="iconfont icon-wechat"></i>
+          </a>
+        </li>
+      
+        <li>
+          <a title="微博" href="">
+            <i class="iconfont icon-weibo"></i>
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+  
+    <div class="footer-more">
+      <a href="https://github.com/zchengsite/hexo-theme-oranges" target="_blank" rel="noopener">Copyright © Oranges 2020</a>
+    </div>
+  
+    <div class="footer-more">
+      <a href="https://github.com/zchengsite/hexo-theme-oranges" target="_blank" rel="noopener">Theme by Oranges | Powered by Hexo</a>
+    </div>
+  
+</div>
 
       </div>
-      <footer id="footer">
-  
-	<div id="footer-info" class="inner">
-	  &copy; 2020 Samuelliang 
-	  - Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
-	  - Theme <a href="https://github.com/hejianxian/hexo-theme-jane/" target="_blank">Jane</a>
-	</div>
-</footer>
+
+      <div class="back-to-top hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+<script>
+
+  function isHidden() {
+    let scrollTop = document.documentElement.scrollTop || document.body.scrollTop
+    if (scrollTop > 0) {
+       document.querySelector(".back-to-top").className = "back-to-top";
+    } else {
+      document.querySelector(".back-to-top").className = "back-to-top hidden";
+    }
+  }
+
+  const backToTop = () => {
+    let scrollTop =
+        document.documentElement.scrollTop || document.body.scrollTop,
+      delay = 10,
+      time = 200;
+    let step = Math.ceil(scrollTop * delay / time);
+    let timer = setInterval(() => {
+      scrollTop =
+        document.documentElement.scrollTop || document.body.scrollTop;
+      if (scrollTop - step <= 0) {
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        clearInterval(timer);
+      } else {
+        document.documentElement.scrollTop = scrollTop - step;
+        document.body.scrollTop = scrollTop - step;
+      }
+    }, delay);
+  }
+
+  document.addEventListener("scroll", isHidden, false);
+  document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+</script>
+
 
     </div>
-    <nav id="mobile-nav">
-  
-    <a href="/" class="mobile-nav-link">Home</a>
-  
-    <a href="/archives" class="mobile-nav-link">Archives</a>
-  
-    <a href="/tags" class="mobile-nav-link">Tag</a>
-  
-</nav>
-    
 
-<script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+    <script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".markdown-body img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
 
-
-  
-<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
-
-  
-<script src="/fancybox/jquery.fancybox.pack.js"></script>
-
-
-
-
-<script src="/js/script.js"></script>
-
-
-  </div>
-</body>
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+  </body>
 </html>
